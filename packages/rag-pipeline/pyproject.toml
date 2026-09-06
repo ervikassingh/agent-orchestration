@@ -2,9 +2,8 @@
 name = "rag-pipeline"
 version = "0.1.0"
 description = "Retrieval-Augmented Generation pipeline with document loading, chunking, embedding, and retrieval"
-authors = ["Ervikas Singh"]
+authors = ["ervikassingh"]
 license = "MIT"
-readme = "README.md"
 packages = [{ include = "rag_pipeline" }]
 
 [tool.poetry.dependencies]

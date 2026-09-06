@@ -2,9 +2,8 @@
 name = "api-server"
 version = "0.1.0"
 description = "FastAPI server exposing agent orchestration endpoints"
-authors = ["Ervikas Singh"]
+authors = ["ervikassingh"]
 license = "MIT"
-readme = "README.md"
 packages = [{ include = "api_server" }]
 
 [tool.poetry.dependencies]

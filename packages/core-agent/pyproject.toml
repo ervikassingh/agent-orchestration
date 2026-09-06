@@ -2,9 +2,8 @@
 name = "core-agent"
 version = "0.1.0"
 description = "Core agent orchestration engine with LangChain and LangGraph"
-authors = ["Ervikas Singh"]
+authors = ["ervikassingh"]
 license = "MIT"
-readme = "README.md"
 packages = [{ include = "core_agent" }]
 
 [tool.poetry.dependencies]

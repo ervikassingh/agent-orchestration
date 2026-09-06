@@ -2,9 +2,8 @@
 name = "tool-library"
 version = "0.1.0"
 description = "Reusable tool abstractions and implementations for agent orchestration"
-authors = ["Ervikas Singh"]
+authors = ["ervikassingh"]
 license = "MIT"
-readme = "README.md"
 packages = [{ include = "tool_library" }]
 
 [tool.poetry.dependencies]
