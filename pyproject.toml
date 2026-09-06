@@ -1,0 +1,48 @@
+[tool.poetry]
+name = "agent-orchestration"
+version = "0.1.0"
+description = "A learning-focused agent orchestration service with LangChain, LangGraph, and RAG"
+authors = ["Ervikas Singh"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0"
+pytest-asyncio = "^0.23"
+ruff = "^0.3"
+mypy = "^1.8"
+pre-commit = "^3.6"
+
+[tool.poetry.scripts]
+orchestrate = "api_server.main:app"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.workspace]
+packages = [
+    { path = "packages/core-agent" },
+    { path = "packages/rag-pipeline" },
+    { path = "packages/api-server" },
+    { path = "packages/tool-library" },
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "N"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

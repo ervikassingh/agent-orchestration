@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "api-server"
+version = "0.1.0"
+description = "FastAPI server exposing agent orchestration endpoints"
+authors = ["Ervikas Singh"]
+license = "MIT"
+readme = "README.md"
+packages = [{ include = "api_server" }]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+core-agent = { path = "../core-agent", develop = true }
+rag-pipeline = { path = "../rag-pipeline", develop = true }
+tool-library = { path = "../tool-library", develop = true }
+fastapi = "^0.115"
+uvicorn = { version = "^0.29", extras = ["standard"] }
+pydantic = "^2.6"
+pydantic-settings = "^2.2"
+httpx = "^0.27"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0"
+pytest-asyncio = "^0.23"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

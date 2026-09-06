@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "rag-pipeline"
+version = "0.1.0"
+description = "Retrieval-Augmented Generation pipeline with document loading, chunking, embedding, and retrieval"
+authors = ["Ervikas Singh"]
+license = "MIT"
+readme = "README.md"
+packages = [{ include = "rag_pipeline" }]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+core-agent = { path = "../core-agent", develop = true }
+langchain = "^0.3"
+langchain-core = "^0.3"
+langchain-openai = "^0.3"
+langchain-community = "^0.3"
+chromadb = "^0.5"
+pypdf = "^4.2"
+tiktoken = "^0.7"
+pydantic = "^2.6"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0"
+pytest-asyncio = "^0.23"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
