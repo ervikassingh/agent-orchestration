@@ -1,8 +1,7 @@
 """Tests for the agent registry."""
 
 import pytest
-
-from core_agent.base import BaseAgent, AgentConfig, AgentResult
+from core_agent.base import AgentResult, BaseAgent
 from core_agent.registry import AgentRegistry
 
 

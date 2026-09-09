@@ -37,5 +37,9 @@ strict = true
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["packages"]
 asyncio_mode = "auto"
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+norecursedirs = ["node_modules", ".git", "dist", "build"]

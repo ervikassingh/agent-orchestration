@@ -1,9 +1,7 @@
 """Agent registry — discover and instantiate agents by name."""
 
-from collections.abc import AsyncIterator
-from typing import Any
 
-from core_agent.base import BaseAgent, AgentConfig, AgentResult
+from core_agent.base import BaseAgent
 
 
 class AgentRegistry:
