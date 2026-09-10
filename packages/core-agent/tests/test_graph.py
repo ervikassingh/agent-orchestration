@@ -2,24 +2,11 @@
 
 import pytest
 from core_agent.graph import (
-    AgentGraph,
-    AgentState,
     OrchestratorState,
-    build_agent_graph,
     build_orchestrator_graph,
     should_continue,
 )
 from langchain_core.messages import AIMessage, HumanMessage
-
-
-def test_agent_state_defaults() -> None:
-    """AgentState should have sensible defaults."""
-    state = AgentState()
-    assert state.messages == []
-    assert state.current_agent == ""
-    assert state.agent_outputs == {}
-    assert state.context == {}
-    assert state.error is None
 
 
 def test_orchestrator_state_defaults() -> None:
@@ -31,22 +18,10 @@ def test_orchestrator_state_defaults() -> None:
     assert state.error is None
 
 
-def test_build_agent_graph_returns_compiled_graph() -> None:
-    """build_agent_graph should return a compiled graph."""
-    graph = build_agent_graph()
-    assert graph is not None
-
-
 def test_build_orchestrator_graph_returns_compiled_graph() -> None:
     """build_orchestrator_graph should return a compiled graph."""
     graph = build_orchestrator_graph()
     assert graph is not None
-
-
-def test_agent_graph_wrapper_initialises() -> None:
-    """AgentGraph wrapper should initialise without error."""
-    wrapper = AgentGraph()
-    assert wrapper.graph is not None
 
 
 def test_should_continue_returns_end_when_no_tool_calls() -> None:
@@ -87,15 +62,7 @@ def test_should_continue_returns_end_when_no_messages() -> None:
 
 
 @pytest.mark.asyncio
-async def test_agent_graph_run_returns_state() -> None:
-    """AgentGraph.run should return an AgentState."""
-    wrapper = AgentGraph()
-    initial = AgentState(messages=[{"role": "user", "content": "hi"}])
-    result = await wrapper.run(initial)
-    assert isinstance(result, AgentState)
-
-
-def test_orchestrator_state_accepts_human_message() -> None:
+async def test_orchestrator_state_accepts_human_message() -> None:
     """OrchestratorState should accept real BaseMessage instances."""
     msg = HumanMessage(content="hello")
     state = OrchestratorState(messages=[msg])

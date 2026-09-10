@@ -12,62 +12,6 @@ from core_agent.settings import settings
 from core_agent.tool_adapter import build_langchain_tools
 
 # ---------------------------------------------------------------------------
-# Agent state (simple, for user-defined graphs)
-# ---------------------------------------------------------------------------
-
-
-class AgentState(BaseModel):
-    """Shared state that flows through the agent graph."""
-
-    messages: list[dict[str, Any]] = []
-    current_agent: str = ""
-    agent_outputs: dict[str, str] = {}
-    context: dict[str, Any] = {}
-    error: str | None = None
-
-
-def build_agent_graph() -> StateGraph:
-    """
-    Build the base LangGraph state machine for agent orchestration.
-
-    Returns a compiled graph ready to invoke or extend.
-    """
-    workflow = StateGraph(AgentState)
-
-    # Minimal pass-through node so the graph is valid and compilable.
-    # Subclasses / users of the framework should add their own nodes
-    # and edges before invoking.
-    async def _passthrough(state: AgentState) -> dict[str, Any]:
-        return {"messages": state.messages}
-
-    workflow.add_node("passthrough", _passthrough)
-    workflow.set_entry_point("passthrough")
-    workflow.add_edge("passthrough", END)
-
-    return workflow.compile()
-
-
-class AgentGraph:
-    """High-level wrapper around the compiled LangGraph."""
-
-    def __init__(self) -> None:
-        self.graph = build_agent_graph()
-
-    async def run(self, initial_state: AgentState) -> AgentState:
-        """Execute the graph with an initial state."""
-        result = await self.graph.ainvoke(initial_state)
-        # LangGraph returns a dict; wrap it back into AgentState
-        if isinstance(result, dict):
-            return AgentState(**result)
-        return result
-
-    async def stream(self, initial_state: AgentState):
-        """Stream graph execution events."""
-        async for event in self.graph.astream_events(initial_state, version="v2"):
-            yield event
-
-
-# ---------------------------------------------------------------------------
 # Orchestrator state (full tool-calling loop)
 # ---------------------------------------------------------------------------
 
@@ -142,11 +86,15 @@ async def tools_node(state: OrchestratorState) -> dict[str, Any]:
     tool_node = ToolNode(_tools)
     result = await tool_node.ainvoke(state)
 
-    # Extract tool outputs into the state dictionary
+    # Extract tool outputs into the state dictionary, keyed by tool_call_id
+    # so repeated calls to the same tool don't overwrite each other.
     tool_outputs: dict[str, Any] = {}
     for msg in result.get("messages", []):
         if hasattr(msg, "name") and msg.name:
-            tool_outputs[msg.name] = msg.content
+            tool_outputs[msg.tool_call_id] = {
+                "name": msg.name,
+                "content": msg.content,
+            }
 
     return {
         "messages": result.get("messages", []),
