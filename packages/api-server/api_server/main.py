@@ -1,5 +1,6 @@
 """FastAPI application entry point."""
 
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -7,7 +8,22 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from rag_pipeline import RAGConfig, RAGPipeline
 from tool_library import ToolRegistry
+
 from .routes import agents, rag
+
+
+def _use_uvicorn_logging() -> None:
+    """Route application loggers through Uvicorn's default handler/formatter."""
+    uvicorn_logger = logging.getLogger("uvicorn")
+    for name in ("api_server", "orchestrator"):
+        app_logger = logging.getLogger(name)
+        app_logger.setLevel(logging.INFO)
+        if uvicorn_logger.handlers:
+            app_logger.handlers = uvicorn_logger.handlers
+            app_logger.propagate = False
+
+
+_use_uvicorn_logging()
 
 
 @asynccontextmanager
@@ -25,7 +41,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(
     title="Agent Orchestration Service",
-    description="A learning-oriented agent orchestration service powered by LangChain & LangGraph",
+    description="An agent orchestration service powered by LangChain & LangGraph",
     version="0.1.0",
     lifespan=lifespan,
 )
