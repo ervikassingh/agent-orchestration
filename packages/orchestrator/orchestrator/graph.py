@@ -103,15 +103,26 @@ async def tools_node(state: State) -> dict[str, Any]:
     tool_outputs: dict[str, Any] = {}
     for msg in result.get("messages", []):
         if hasattr(msg, "name") and msg.name:
+            output = msg.content
+            output_metadata = {
+                "content_length": len(output) if isinstance(output, str) else None,
+            }
+            if isinstance(output, dict):
+                output_metadata.update(
+                    {
+                        "source": output.get("source"),
+                        "length": output.get("length"),
+                    }
+                )
             logger.info(
-                "agent_step=tool_completed iteration=%d tool=%s tool_call_id=%s",
-                state.iterations,
+                "tool_used name=%s iteration=%d success=true metadata=%s",
                 msg.name,
-                msg.tool_call_id,
+                state.iterations,
+                output_metadata,
             )
             tool_outputs[msg.tool_call_id] = {
                 "name": msg.name,
-                "content": msg.content,
+                "content": output,
             }
 
     return {

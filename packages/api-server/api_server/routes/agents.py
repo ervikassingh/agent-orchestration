@@ -85,12 +85,16 @@ async def run_agent(input_data: RunAgentInput) -> dict[str, Any]:
     )
     last_content = ""
     for msg in reversed(messages):
+        if getattr(msg, "type", "") == "tool":
+            continue
         if getattr(msg, "content", None):
             last_content = msg.content
             break
 
     serialised_messages = []
     for message in messages:
+        if getattr(message, "type", "") == "tool":
+            continue
         content = getattr(message, "content", None)
         if inspect.isawaitable(content):
             content = ""
