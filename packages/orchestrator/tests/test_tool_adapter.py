@@ -1,12 +1,8 @@
 """Tests for the tool adapter that bridges BaseTool to LangChain StructuredTool."""
 
 import pytest
-from langchain_core.tools import StructuredTool
 from base import BaseTool, ToolConfig, ToolResult
-from tools.email_tool import EmailTool
-from tools.rag_tool import RAGTool
-from tools.web_tool import WebSurfTool
-
+from langchain_core.tools import StructuredTool
 from tool_adapter import (
     EmailSchema,
     RAGSchema,
@@ -14,6 +10,9 @@ from tool_adapter import (
     build_langchain_tools,
     tool_to_langchain,
 )
+from tools.email_tool import EmailTool
+from tools.rag_tool import RAGTool
+from tools.web_tool import WebSurfTool
 
 
 class DummyTool(BaseTool):

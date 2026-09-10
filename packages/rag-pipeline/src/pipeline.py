@@ -6,7 +6,6 @@ from langchain_core.documents import Document
 from langchain_openai import ChatOpenAI
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pydantic import BaseModel
-
 from retriever import Chunk, RetrievalResult, VectorRetriever
 
 __all__ = ["RAGConfig", "RAGPipeline", "Chunk", "RetrievalResult"]
@@ -60,13 +59,11 @@ class RAGPipeline:
         if ext == ".pdf":
             from langchain_community.document_loaders import PyPDFLoader  # noqa: PLC0415
 
-            loader = PyPDFLoader(file_path)
-            docs = await loader.aload()
+            docs = await PyPDFLoader(file_path).aload()
         elif ext in {".txt", ".md", ".rst"}:
             from langchain_community.document_loaders import TextLoader  # noqa: PLC0415
 
-            loader = TextLoader(file_path, encoding="utf-8")
-            docs = await loader.aload()
+            docs = await TextLoader(file_path, encoding="utf-8").aload()
         else:
             msg = f"Unsupported file extension: {ext}. Supported: .pdf, .txt, .md, .rst"
             raise ValueError(msg)
@@ -93,7 +90,7 @@ class RAGPipeline:
         if not chunks:
             return "I could not find any relevant information in the knowledge base."
 
-        context = "\n\n".join(f"[{i+1}] {c.text}" for i, c in enumerate(chunks))
+        context = "\n\n".join(f"[{i + 1}] {c.text}" for i, c in enumerate(chunks))
 
         prompt = (
             "You are a helpful research assistant. Answer the question based solely on the "
@@ -109,7 +106,8 @@ class RAGPipeline:
         )
         response = await llm.ainvoke(prompt)
 
-        return response.content if hasattr(response, "content") else str(response)
+        content = response.content if hasattr(response, "content") else response
+        return content if isinstance(content, str) else str(content)
 
     async def retrieve(self, question: str) -> RetrievalResult:
         """Retrieve relevant chunks without generation."""

@@ -1,5 +1,7 @@
 """RAG-related API routes."""
 
+from typing import Any
+
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
@@ -19,7 +21,7 @@ class RAGIngestInput(BaseModel):
 
 
 @router.post("/query")
-async def rag_query(input_data: RAGQueryInput, request: Request) -> dict:
+async def rag_query(input_data: RAGQueryInput, request: Request) -> dict[str, Any]:
     """Query the RAG pipeline with a question."""
     pipeline = request.app.state.rag_pipeline
     answer = await pipeline.query(input_data.question)
@@ -27,7 +29,7 @@ async def rag_query(input_data: RAGQueryInput, request: Request) -> dict:
 
 
 @router.post("/ingest")
-async def ingest_document(input_data: RAGIngestInput, request: Request) -> dict:
+async def ingest_document(input_data: RAGIngestInput, request: Request) -> dict[str, Any]:
     """Ingest a document into the vector store."""
     pipeline = request.app.state.rag_pipeline
     try:

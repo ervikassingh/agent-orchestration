@@ -2,8 +2,8 @@
 
 from unittest.mock import AsyncMock, patch
 
-from main import app
 from fastapi.testclient import TestClient
+from main import app
 
 
 def test_agents_list_endpoint() -> None:
@@ -53,17 +53,16 @@ def test_agents_run_requires_openrouter_key() -> None:
 
 
 def test_agents_stream_endpoint_returns_tokens() -> None:
-    """Agent streaming should expose chat content as structured SSE events."""
-    async def events(*args, **kwargs):
-        yield {"event": "on_chat_model_stream", "data": {"chunk": AsyncMock(content="Hello")}}
-        yield {"event": "on_chain_end", "data": {}}
-        yield {"event": "on_chat_model_stream", "data": {"chunk": AsyncMock(content=" world")}}
+    """Agent streaming should expose message chunks as structured SSE events."""
+    async def messages(*args, **kwargs):
+        yield AsyncMock(content="Hello"), {}
+        yield AsyncMock(content=" world"), {}
 
     with (
         patch("routes.agents.build_graph") as mock_build,
         patch("routes.agents.settings.OPENROUTER_API_KEY", "test-key"),
     ):
-        mock_build.return_value.astream_events = events
+        mock_build.return_value.astream = messages
 
         with TestClient(app) as client:
             response = client.post("/agents/stream", json={"messages": [{"content": "Hi"}]})

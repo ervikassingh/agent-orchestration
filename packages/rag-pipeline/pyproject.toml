@@ -9,18 +9,20 @@ packages = [{ include = "*.py", from = "src" }]
 [tool.poetry.dependencies]
 python = "^3.11"
 orchestrator = { path = "../orchestrator", develop = true }
-langchain = "^0.3"
-langchain-core = "^0.3"
-langchain-openai = "^0.3"
-langchain-community = "^0.3"
-chromadb = "^0.5"
-pypdf = "^4.2"
-tiktoken = "^0.7"
-pydantic = "^2.6"
+langchain = "^1.4"
+langchain-core = "^1.6"
+langchain-openai = "^1.6"
+langchain-community = "^0.4"
+langchain-chroma = "^1.1"
+langchain-text-splitters = "^1.1"
+chromadb = "^1.5"
+pypdf = "^6.18"
+tiktoken = "^0.14"
+pydantic = "^2.13"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0"
-pytest-asyncio = "^0.23"
+pytest-asyncio = "^1.4"
 
 [build-system]
 requires = ["poetry-core"]

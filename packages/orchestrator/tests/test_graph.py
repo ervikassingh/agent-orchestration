@@ -1,9 +1,9 @@
 """Tests for the LangGraph orchestrator graph."""
 
 import pytest
-from langchain_core.messages import AIMessage, HumanMessage
-
 from graph import State, build_graph, should_continue
+from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
+from langgraph.graph.message import add_messages
 
 
 def test_state_defaults() -> None:
@@ -65,3 +65,16 @@ async def test_state_accepts_human_message() -> None:
     state = State(messages=[msg])
     assert len(state.messages) == 1
     assert state.messages[0].content == "hello"
+
+
+def test_state_preserves_tool_call_history() -> None:
+    """Tool results must remain paired with the assistant tool call."""
+    assistant = AIMessage(
+        content="",
+        tool_calls=[{"name": "web_surf", "args": {"url": "https://example.com"}, "id": "1"}],
+    )
+    tool_result = ToolMessage(content="page content", tool_call_id="1", name="web_surf")
+
+    merged_messages = add_messages([assistant], [tool_result])
+
+    assert merged_messages == [assistant, tool_result]

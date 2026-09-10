@@ -7,7 +7,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pipeline import RAGConfig, RAGPipeline
 from registry import ToolRegistry
-
 from routes import agents, rag
 
 

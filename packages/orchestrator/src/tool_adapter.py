@@ -2,9 +2,9 @@
 
 from typing import Any
 
+from base import BaseTool
 from langchain_core.tools import StructuredTool
 from pydantic import BaseModel, Field
-from base import BaseTool
 from tools.email_tool import EmailTool
 from tools.rag_tool import RAGTool
 from tools.web_tool import WebSurfTool

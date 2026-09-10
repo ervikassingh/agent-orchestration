@@ -2,26 +2,30 @@
 
 import inspect
 import json
+import logging
+from collections.abc import AsyncIterator
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
-from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 from graph import State, build_graph
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 from openai import OpenAIError
 from pydantic import BaseModel
 from settings import settings
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 class RunAgentInput(BaseModel):
     """Input for running or streaming the orchestrator."""
 
-    messages: list[dict] = []
+    messages: list[dict[str, Any]] = []
 
 
 @router.get("")
-async def list_agents() -> dict:
+async def list_agents() -> dict[str, Any]:
     """Return the agents available to the web UI."""
     return {
         "agents": [
@@ -35,7 +39,7 @@ async def list_agents() -> dict:
 
 def _messages_from_input(input_data: RunAgentInput) -> list[BaseMessage]:
     """Convert raw message dicts into LangChain message instances."""
-    messages = []
+    messages: list[BaseMessage] = []
     for message in input_data.messages:
         content = message.get("content", "")
         role = message.get("role", "user")
@@ -49,8 +53,9 @@ def _messages_from_input(input_data: RunAgentInput) -> list[BaseMessage]:
 
 
 @router.post("/run")
-async def run_agent(input_data: RunAgentInput) -> dict:
+async def run_agent(input_data: RunAgentInput) -> dict[str, Any]:
     """Run the orchestrator with the given input."""
+    logger.info("agent_request_started endpoint=run input_messages=%d", len(input_data.messages))
     if not settings.OPENROUTER_API_KEY:
         raise HTTPException(
             status_code=503,
@@ -62,6 +67,7 @@ async def run_agent(input_data: RunAgentInput) -> dict:
     try:
         result = await graph.ainvoke(state)
     except OpenAIError as exc:
+        logger.exception("agent_request_failed endpoint=run provider_error=%s", exc)
         raise HTTPException(
             status_code=502,
             detail=f"The configured LLM provider rejected the request: {exc}",
@@ -69,6 +75,14 @@ async def run_agent(input_data: RunAgentInput) -> dict:
 
     # LangGraph returns a dict; normalise back to a serialisable response.
     messages = result.get("messages", []) if isinstance(result, dict) else result.messages
+    tool_outputs = (
+        result.get("tool_outputs", {}) if isinstance(result, dict) else result.tool_outputs
+    )
+    logger.info(
+        "agent_request_completed endpoint=run iterations=%s tools_used=%s",
+        result.get("iterations") if isinstance(result, dict) else result.iterations,
+        [output.get("name") for output in tool_outputs.values()],
+    )
     last_content = ""
     for msg in reversed(messages):
         if getattr(msg, "content", None):
@@ -97,6 +111,7 @@ async def run_agent(input_data: RunAgentInput) -> dict:
 @router.post("/stream")
 async def stream_agent(input_data: RunAgentInput) -> StreamingResponse:
     """Stream orchestrator output via SSE."""
+    logger.info("agent_request_started endpoint=stream input_messages=%d", len(input_data.messages))
     if not settings.OPENROUTER_API_KEY:
         raise HTTPException(
             status_code=503,
@@ -106,18 +121,17 @@ async def stream_agent(input_data: RunAgentInput) -> StreamingResponse:
     graph = build_graph()
     state = State(messages=_messages_from_input(input_data))
 
-    async def event_stream():
+    async def event_stream() -> AsyncIterator[str]:
         try:
-            async for event in graph.astream_events(state, version="v1"):
-                if event.get("event") != "on_chat_model_stream":
-                    continue
-
-                content = event.get("data", {}).get("chunk", {}).content
+            async for message_chunk, _metadata in graph.astream(state, stream_mode="messages"):
+                content = getattr(message_chunk, "content", "")
                 if isinstance(content, str) and content:
                     yield f"data: {json.dumps({'token': content})}\n\n"
 
             yield f"data: {json.dumps({'done': True})}\n\n"
+            logger.info("agent_request_completed endpoint=stream")
         except OpenAIError as exc:
+            logger.exception("agent_request_failed endpoint=stream provider_error=%s", exc)
             yield f"data: {json.dumps({'error': str(exc)})}\n\n"
 
     return StreamingResponse(

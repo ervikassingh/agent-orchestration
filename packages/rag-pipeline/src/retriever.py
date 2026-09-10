@@ -4,7 +4,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
 
 
@@ -69,7 +69,7 @@ class VectorRetriever:
     async def add_texts(
         self,
         texts: Sequence[str],
-        metadatas: list[dict] | None = None,
+        metadatas: list[dict[str, Any]] | None = None,
     ) -> list[str]:
         """Add texts (and optional metadata) to the vector store. Returns IDs."""
         ids = await self._store.aadd_texts(

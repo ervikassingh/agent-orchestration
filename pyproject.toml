@@ -15,11 +15,11 @@ api-server = { path = "packages/api-server", develop = true }
 tool-library = { path = "packages/tool-library", develop = true }
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^8.0"
-pytest-asyncio = "^0.23"
-ruff = "^0.3"
-mypy = "^1.8"
-pre-commit = "^3.6"
+pytest = "^9.0"
+pytest-asyncio = "^1.4"
+ruff = "^0.14"
+mypy = "^1.19"
+pre-commit = "^4.4"
 
 [tool.poetry.scripts]
 orchestrate = "main:app"
