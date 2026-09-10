@@ -1,4 +1,4 @@
-"""LangGraph-based agent orchestration graph."""
+"""LangGraph-based tool-calling orchestrator."""
 
 from typing import Any, Literal
 
@@ -8,39 +8,26 @@ from langgraph.graph import END, StateGraph
 from langgraph.prebuilt import ToolNode
 from pydantic import BaseModel, Field
 
-from core_agent.settings import settings
-from core_agent.tool_adapter import build_langchain_tools
-
-# ---------------------------------------------------------------------------
-# Orchestrator state (full tool-calling loop)
-# ---------------------------------------------------------------------------
+from settings import settings
+from tool_adapter import build_langchain_tools
 
 
-class OrchestratorState(BaseModel):
+class State(BaseModel):
     """State for the tool-calling orchestration loop."""
 
     messages: list[BaseMessage] = Field(default_factory=list)
-
-    current_agent: str = ""
-    agent_outputs: dict[str, str] = Field(default_factory=dict)
-    context: dict[str, Any] = Field(default_factory=dict)
-    error: str | None = None
     tool_outputs: dict[str, Any] = Field(default_factory=dict)
     iterations: int = 0
     max_iterations: int = Field(default_factory=lambda: settings.MAX_TOOL_ITERATIONS)
-
-
-# ---------------------------------------------------------------------------
-# Graph nodes
-# ---------------------------------------------------------------------------
+    error: str | None = None
 
 
 def _get_llm() -> ChatOpenAI:
     """Lazily construct the ChatOpenAI client so module import doesn't require credentials."""
     return ChatOpenAI(
-        model=settings.ORCHESTRATOR_MODEL,
-        temperature=settings.ORCHESTRATOR_TEMPERATURE,
-        max_tokens=settings.ORCHESTRATOR_MAX_TOKENS,
+        model=settings.MODEL,
+        temperature=settings.TEMPERATURE,
+        max_tokens=settings.MAX_TOKENS,
         api_key=settings.OPENROUTER_API_KEY,
         base_url=settings.OPENROUTER_BASE_URL,
     )
@@ -63,7 +50,7 @@ _SYSTEM_PROMPT = (
 )
 
 
-async def orchestrator_node(state: OrchestratorState) -> dict[str, Any]:
+async def orchestrator_node(state: State) -> dict[str, Any]:
     """Call the LLM with the current conversation and tools."""
     messages = state.messages or []
 
@@ -81,7 +68,7 @@ async def orchestrator_node(state: OrchestratorState) -> dict[str, Any]:
     }
 
 
-async def tools_node(state: OrchestratorState) -> dict[str, Any]:
+async def tools_node(state: State) -> dict[str, Any]:
     """Execute tool calls and collect results."""
     tool_node = ToolNode(_tools)
     result = await tool_node.ainvoke(state)
@@ -107,7 +94,7 @@ async def tools_node(state: OrchestratorState) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def should_continue(state: OrchestratorState) -> Literal["tools", "__end__"]:
+def should_continue(state: State) -> Literal["tools", "__end__"]:
     """Decide whether to continue the tool loop or finish."""
     if state.iterations >= state.max_iterations:
         return END
@@ -124,9 +111,9 @@ def should_continue(state: OrchestratorState) -> Literal["tools", "__end__"]:
 # ---------------------------------------------------------------------------
 
 
-def build_orchestrator_graph() -> StateGraph:
-    """Build and compile the full tool-calling orchestration graph."""
-    workflow = StateGraph(OrchestratorState)
+def build_graph() -> StateGraph:
+    """Build and compile the tool-calling orchestration graph."""
+    workflow = StateGraph(State)
 
     workflow.add_node("orchestrator", orchestrator_node)
     workflow.add_node("tools", tools_node)

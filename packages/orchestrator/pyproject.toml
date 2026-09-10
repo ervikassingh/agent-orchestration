@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "core-agent"
+name = "orchestrator"
 version = "0.1.0"
-description = "Core agent orchestration engine with LangChain and LangGraph"
+description = "LangGraph-based tool-calling orchestrator"
 authors = ["ervikassingh"]
 license = "MIT"
-packages = [{ include = "core_agent" }]
+packages = [{ include = "*.py", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.11"

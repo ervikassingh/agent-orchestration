@@ -9,16 +9,16 @@ The orchestrator runs an LLM in a tool-calling loop: it decides which tool to in
 ```mermaid
 flowchart LR
     UI[web-ui<br/>React + Vite] -->|HTTP /api| API[api-server<br/>FastAPI]
-    API --> CA[core-agent<br/>LangGraph engine]
+    API --> OR[orchestrator<br/>LangGraph engine]
     API --> RP[rag-pipeline<br/>Chroma + embeddings]
     API --> TL[tool-library<br/>tool registry]
-    CA --> TL
-    RP --> CA
+    OR --> TL
+    RP --> OR
 ```
 
 | Package | Path | Purpose |
 | --- | --- | --- |
-| `core-agent` | `packages/core-agent` | Agent abstractions (`BaseAgent`, `AgentConfig`, `AgentResult`), the LangGraph orchestration graph with a tool-calling loop, and the `OrchestratorSettings` config |
+| `orchestrator` | `packages/orchestrator` | LangGraph orchestration graph with a tool-calling loop, environment-based `Settings` config, and the `BaseTool` → LangChain adapter |
 | `rag-pipeline` | `packages/rag-pipeline` | Document loading (PDF, text), chunking, OpenAI embeddings, Chroma vector store, and retrieval-augmented generation |
 | `tool-library` | `packages/tool-library` | Reusable tool abstractions (`BaseTool`, `ToolConfig`, `ToolResult`), a tool registry, and built-in tools: `WebSurfTool`, `EmailTool`, `RAGTool` |
 | `api-server` | `packages/api-server` | FastAPI app exposing `/agents` (run, stream) and `/rag` (query, ingest) endpoints, with lifespan-managed registries and pipeline |
@@ -31,20 +31,20 @@ The orchestrator has three tools wired in by default:
 | Tool | Name | What it does |
 | --- | --- | --- |
 | `WebSurfTool` | `web_surf` | Fetches a URL with `httpx`, strips HTML/script/style tags, and returns truncated plain text |
-| `EmailTool` | `send_email` | Sends an email via SMTP with STARTTLS, using credentials from `OrchestratorSettings` |
+| `EmailTool` | `send_email` | Sends an email via SMTP with STARTTLS, using credentials from `Settings` |
 | `RAGTool` | `rag_query` | POSTs a question to the local `/rag/query` endpoint and returns the answer; falls back gracefully if the RAG service is unreachable |
 
-Tools are wrapped as LangChain `StructuredTool` instances via `tool_to_langchain()` in `core_agent/tool_adapter.py`, then bound to the LLM with `bind_tools()`.
+Tools are wrapped as LangChain `StructuredTool` instances via `tool_to_langchain()` in `orchestrator/tool_adapter.py`, then bound to the LLM with `bind_tools()`.
 
 ## Orchestration Loop
 
-The `build_orchestrator_graph()` function in `core_agent/graph.py` compiles a LangGraph `StateGraph` with:
+The `build_graph()` function in `orchestrator/graph.py` compiles a LangGraph `StateGraph` with:
 
 - **`orchestrator` node** — calls the LLM (OpenRouter-compatible `ChatOpenAI`) with the conversation and bound tools; injects a system prompt on the first turn
 - **`tools` node** — a LangGraph `ToolNode` that executes any tool calls the LLM emitted
 - **Conditional edge** — `should_continue()` routes back to `tools` if the LLM made tool calls, or to `END` if it produced a final answer or hit `MAX_TOOL_ITERATIONS`
 
-State is tracked in `OrchestratorState` (messages, iterations, tool outputs, error).
+State is tracked in `State` (messages, iterations, tool outputs, error).
 
 ## Prerequisites
 
@@ -56,15 +56,15 @@ State is tracked in `OrchestratorState` (messages, iterations, tool outputs, err
 
 ## Configuration
 
-All settings are loaded from environment variables (or a `.env` file) via `OrchestratorSettings` in `core_agent/settings.py`:
+All settings are loaded from environment variables (or a `.env` file) via `Settings` in `orchestrator/settings.py`:
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `OPENROUTER_API_KEY` | `""` | API key for the LLM endpoint |
 | `OPENROUTER_BASE_URL` | `https://openrouter.ai/api/v1` | LLM endpoint base URL |
-| `ORCHESTRATOR_MODEL` | `openai/gpt-4o-mini` | Model identifier |
-| `ORCHESTRATOR_TEMPERATURE` | `0.7` | Sampling temperature |
-| `ORCHESTRATOR_MAX_TOKENS` | `4096` | Max output tokens |
+| `MODEL` | `openai/gpt-4o-mini` | Model identifier |
+| `TEMPERATURE` | `0.7` | Sampling temperature |
+| `MAX_TOKENS` | `4096` | Max output tokens |
 | `SMTP_HOST` / `SMTP_PORT` | `localhost` / `587` | SMTP server for `EmailTool` |
 | `SMTP_USERNAME` / `SMTP_PASSWORD` | `""` | SMTP credentials |
 | `SMTP_FROM_EMAIL` | `""` | Default sender address |
@@ -107,9 +107,8 @@ The Vite dev server proxies `/api/*` to `http://localhost:8000`, so no CORS setu
 
 | Method | Path | Description |
 | --- | --- | --- |
-| `GET` | `/agents` | List registered agents |
-| `POST` | `/agents/{name}/run` | Run an agent by name |
-| `POST` | `/agents/{name}/stream` | Stream agent output via SSE |
+| `POST` | `/agents/run` | Run the orchestrator with the given messages |
+| `POST` | `/agents/stream` | Stream orchestrator output via SSE |
 
 ### RAG
 
@@ -127,27 +126,25 @@ agent-orchestration/
 ├── Makefile
 ├── pyproject.toml            # Poetry workspace root
 ├── packages/
-│   ├── core-agent/
-│   │   ├── core_agent/
-│   │   │   ├── base.py       # BaseAgent, AgentConfig, AgentResult
+│   ├── orchestrator/
+│   │   ├── src/
 │   │   │   ├── graph.py      # LangGraph orchestration (tool-calling loop)
-│   │   │   ├── registry.py   # AgentRegistry
-│   │   │   ├── settings.py   # OrchestratorSettings (env-based config)
+│   │   │   ├── settings.py   # Settings (env-based config)
 │   │   │   └── tool_adapter.py  # BaseTool → LangChain StructuredTool
 │   │   └── tests/
 │   ├── rag-pipeline/
-│   │   ├── rag_pipeline/
+│   │   ├── src/
 │   │   │   ├── pipeline.py   # RAGPipeline (ingest, retrieve, query)
 │   │   │   └── retriever.py  # VectorRetriever (Chroma + OpenAI embeddings)
 │   │   └── tests/
 │   ├── tool-library/
-│   │   ├── tool_library/
+│   │   ├── src/
 │   │   │   ├── base.py       # BaseTool, ToolConfig, ToolResult
 │   │   │   ├── registry.py   # ToolRegistry
 │   │   │   └── tools/        # web_tool, email_tool, rag_tool
 │   │   └── tests/
 │   └── api-server/
-│       ├── api_server/
+│       ├── src/
 │       │   ├── main.py       # FastAPI app + lifespan
 │       │   └── routes/       # agents.py, rag.py
 │       └── tests/
@@ -164,18 +161,11 @@ agent-orchestration/
 
 ## Extending
 
-### Adding a new agent
-
-1. Subclass `BaseAgent` from `core_agent.base` and implement `run()` and `stream()`.
-2. Register it with `AgentRegistry.register(name, AgentClass)`.
-3. Expose it via the `/agents` routes in `api_server`.
-
 ### Adding a new tool
 
 1. Subclass `BaseTool` from `tool_library.base` and implement `run()`.
 2. Register it with `ToolRegistry.register(name, ToolClass)`.
-3. Add the tool to `build_langchain_tools()` in `core_agent/tool_adapter.py` so the orchestrator can bind it.
-
+3. Add the tool to `build_langchain_tools()` in `orchestrator
 ### Code style
 
 - **Ruff** for linting and import sorting (line length 100).

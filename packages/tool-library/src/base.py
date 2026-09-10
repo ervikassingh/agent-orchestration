@@ -41,7 +41,7 @@ class BaseTool(ABC):
     async def arun(self, input_data: dict[str, Any]) -> ToolResult:
         """Run the tool with retry handling."""
         last_error: Exception | None = None
-        for attempt in range(self.config.max_retries + 1):
+        for _attempt in range(self.config.max_retries + 1):
             try:
                 return await self.run(input_data)
             except Exception as exc:  # noqa: BLE001

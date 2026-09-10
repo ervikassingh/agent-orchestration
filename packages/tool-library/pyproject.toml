@@ -4,7 +4,10 @@ version = "0.1.0"
 description = "Reusable tool abstractions and implementations for agent orchestration"
 authors = ["ervikassingh"]
 license = "MIT"
-packages = [{ include = "tool_library" }]
+packages = [
+    { include = "*.py", from = "src" },
+    { include = "tools", from = "src" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.11"

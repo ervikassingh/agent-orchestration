@@ -1,33 +1,30 @@
 """Tests for the LangGraph orchestrator graph."""
 
 import pytest
-from core_agent.graph import (
-    OrchestratorState,
-    build_orchestrator_graph,
-    should_continue,
-)
 from langchain_core.messages import AIMessage, HumanMessage
 
+from graph import State, build_graph, should_continue
 
-def test_orchestrator_state_defaults() -> None:
-    """OrchestratorState should have sensible defaults."""
-    state = OrchestratorState()
+
+def test_state_defaults() -> None:
+    """State should have sensible defaults."""
+    state = State()
     assert state.messages == []
     assert state.iterations == 0
     assert state.tool_outputs == {}
     assert state.error is None
 
 
-def test_build_orchestrator_graph_returns_compiled_graph() -> None:
-    """build_orchestrator_graph should return a compiled graph."""
-    graph = build_orchestrator_graph()
+def test_build_graph_returns_compiled_graph() -> None:
+    """build_graph should return a compiled graph."""
+    graph = build_graph()
     assert graph is not None
 
 
 def test_should_continue_returns_end_when_no_tool_calls() -> None:
     """should_continue should return END when the last message has no tool calls."""
     msg = AIMessage(content="hello")
-    state = OrchestratorState(messages=[msg], iterations=0)
+    state = State(messages=[msg], iterations=0)
     result = should_continue(state)
     assert result == "__end__"
 
@@ -38,7 +35,7 @@ def test_should_continue_returns_tools_when_tool_calls_present() -> None:
         content="",
         tool_calls=[{"name": "web_surf", "args": {"url": "https://example.com"}, "id": "1"}],
     )
-    state = OrchestratorState(messages=[msg], iterations=0)
+    state = State(messages=[msg], iterations=0)
     result = should_continue(state)
     assert result == "tools"
 
@@ -49,22 +46,22 @@ def test_should_continue_returns_end_when_max_iterations_reached() -> None:
         content="",
         tool_calls=[{"name": "web_surf", "args": {}, "id": "1"}],
     )
-    state = OrchestratorState(messages=[msg], iterations=10, max_iterations=10)
+    state = State(messages=[msg], iterations=10, max_iterations=10)
     result = should_continue(state)
     assert result == "__end__"
 
 
 def test_should_continue_returns_end_when_no_messages() -> None:
     """should_continue should return END when there are no messages."""
-    state = OrchestratorState(messages=[], iterations=0)
+    state = State(messages=[], iterations=0)
     result = should_continue(state)
     assert result == "__end__"
 
 
 @pytest.mark.asyncio
-async def test_orchestrator_state_accepts_human_message() -> None:
-    """OrchestratorState should accept real BaseMessage instances."""
+async def test_state_accepts_human_message() -> None:
+    """State should accept real BaseMessage instances."""
     msg = HumanMessage(content="hello")
-    state = OrchestratorState(messages=[msg])
+    state = State(messages=[msg])
     assert len(state.messages) == 1
     assert state.messages[0].content == "hello"
