@@ -4,7 +4,7 @@ import inspect
 
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 from graph import State, build_graph
 from pydantic import BaseModel
 
@@ -17,12 +17,32 @@ class RunAgentInput(BaseModel):
     messages: list[dict] = []
 
 
-def _messages_from_input(input_data: RunAgentInput) -> list[HumanMessage]:
-    """Convert raw message dicts into LangChain HumanMessage instances."""
-    return [
-        HumanMessage(content=m.get("content", ""))
-        for m in input_data.messages
-    ]
+@router.get("")
+async def list_agents() -> dict:
+    """Return the agents available to the web UI."""
+    return {
+        "agents": [
+            {
+                "name": "orchestrator",
+                "description": "Runs the LangGraph agent orchestration workflow.",
+            }
+        ]
+    }
+
+
+def _messages_from_input(input_data: RunAgentInput) -> list[BaseMessage]:
+    """Convert raw message dicts into LangChain message instances."""
+    messages = []
+    for message in input_data.messages:
+        content = message.get("content", "")
+        role = message.get("role", "user")
+        if role == "assistant":
+            messages.append(AIMessage(content=content))
+        elif role == "system":
+            messages.append(SystemMessage(content=content))
+        else:
+            messages.append(HumanMessage(content=content))
+    return messages
 
 
 @router.post("/run")

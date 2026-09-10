@@ -6,6 +6,20 @@ from main import app
 from fastapi.testclient import TestClient
 
 
+def test_agents_list_endpoint() -> None:
+    """Agents list endpoint should return discoverable agent metadata."""
+    with TestClient(app) as client:
+        response = client.get("/agents")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["agents"] == [
+            {
+                "name": "orchestrator",
+                "description": "Runs the LangGraph agent orchestration workflow.",
+            }
+        ]
+
+
 def test_agents_run_endpoint() -> None:
     """Agents run endpoint should accept input and return output."""
     with patch("routes.agents.build_graph") as mock_build:
