@@ -1,18 +1,10 @@
 """Tool registry — discover and instantiate tools by name."""
 
-from tool_library.base import BaseTool
+from base import BaseTool
 
 
 class ToolRegistry:
-    """
-    Global registry of available tool types.
-
-    Usage::
-
-        registry = ToolRegistry()
-        registry.register("web-search", WebSearchTool)
-        tool = registry.get("web-search")(config)
-    """
+    """Global registry of available tool types."""
 
     def __init__(self) -> None:
         self._tools: dict[str, type[BaseTool]] = {}

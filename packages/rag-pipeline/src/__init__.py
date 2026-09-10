@@ -9,8 +9,8 @@ Provides:
 - RAG chain factory
 """
 
-from rag_pipeline.pipeline import RAGConfig, RAGPipeline
-from rag_pipeline.retriever import VectorRetriever
+from pipeline import RAGConfig, RAGPipeline
+from retriever import VectorRetriever
 
 __all__ = [
     "RAGPipeline",

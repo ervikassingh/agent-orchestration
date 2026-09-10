@@ -7,7 +7,7 @@ from langchain_openai import ChatOpenAI
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pydantic import BaseModel
 
-from rag_pipeline.retriever import Chunk, RetrievalResult, VectorRetriever
+from retriever import Chunk, RetrievalResult, VectorRetriever
 
 __all__ = ["RAGConfig", "RAGPipeline", "Chunk", "RetrievalResult"]
 

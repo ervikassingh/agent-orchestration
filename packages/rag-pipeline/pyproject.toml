@@ -4,11 +4,11 @@ version = "0.1.0"
 description = "Retrieval-Augmented Generation pipeline with document loading, chunking, embedding, and retrieval"
 authors = ["ervikassingh"]
 license = "MIT"
-packages = [{ include = "rag_pipeline" }]
+packages = [{ include = "*.py", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-core-agent = { path = "../core-agent", develop = true }
+orchestrator = { path = "../orchestrator", develop = true }
 langchain = "^0.3"
 langchain-core = "^0.3"
 langchain-openai = "^0.3"

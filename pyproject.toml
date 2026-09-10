@@ -9,7 +9,7 @@ package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.11"
-core-agent = { path = "packages/core-agent", develop = true }
+orchestrator = { path = "packages/orchestrator", develop = true }
 rag-pipeline = { path = "packages/rag-pipeline", develop = true }
 api-server = { path = "packages/api-server", develop = true }
 tool-library = { path = "packages/tool-library", develop = true }
@@ -22,7 +22,7 @@ mypy = "^1.8"
 pre-commit = "^3.6"
 
 [tool.poetry.scripts]
-orchestrate = "api_server.main:app"
+orchestrate = "main:app"
 
 [tool.ruff]
 line-length = 100

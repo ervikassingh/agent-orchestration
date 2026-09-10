@@ -4,11 +4,14 @@ version = "0.1.0"
 description = "FastAPI server exposing agent orchestration endpoints"
 authors = ["ervikassingh"]
 license = "MIT"
-packages = [{ include = "api_server" }]
+packages = [
+    { include = "*.py", from = "src" },
+    { include = "routes", from = "src" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-core-agent = { path = "../core-agent", develop = true }
+orchestrator = { path = "../orchestrator", develop = true }
 rag-pipeline = { path = "../rag-pipeline", develop = true }
 tool-library = { path = "../tool-library", develop = true }
 fastapi = "^0.115"
