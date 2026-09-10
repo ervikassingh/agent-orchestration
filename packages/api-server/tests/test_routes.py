@@ -22,7 +22,10 @@ def test_agents_list_endpoint() -> None:
 
 def test_agents_run_endpoint() -> None:
     """Agents run endpoint should accept input and return output."""
-    with patch("routes.agents.build_graph") as mock_build:
+    with (
+        patch("routes.agents.build_graph") as mock_build,
+        patch("routes.agents.settings.OPENROUTER_API_KEY", "test-key"),
+    ):
         mock_graph = AsyncMock()
         mock_graph.ainvoke.return_value = {
             "messages": [AsyncMock(content="Hello! How can I help you?")]
@@ -35,6 +38,18 @@ def test_agents_run_endpoint() -> None:
             data = response.json()
             assert "output" in data
             assert "messages" in data
+
+
+def test_agents_run_requires_openrouter_key() -> None:
+    """Agent requests should explain missing LLM configuration."""
+    with patch("routes.agents.settings.OPENROUTER_API_KEY", ""):
+        with TestClient(app) as client:
+            response = client.post("/agents/run", json={"messages": [{"content": "Hi"}]})
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == (
+        "OPENROUTER_API_KEY is not configured. Add it to .env and restart the API."
+    )
 
 
 def test_health_check() -> None:

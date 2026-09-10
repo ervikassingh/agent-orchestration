@@ -12,6 +12,16 @@ interface ChatMessage {
 
 const API_BASE = "/api";
 
+async function apiError(response: Response): Promise<Error> {
+  try {
+    const data = await response.json();
+    if (typeof data.detail === "string") return new Error(data.detail);
+  } catch {
+    // Fall back to the HTTP status when the response is not JSON.
+  }
+  return new Error(`API returned ${response.status}`);
+}
+
 export default function App() {
   const [agents, setAgents] = useState<AgentInfo[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -23,7 +33,7 @@ export default function App() {
   useEffect(() => {
     fetch(`${API_BASE}/agents`)
       .then((res) => {
-        if (!res.ok) throw new Error(`API returned ${res.status}`);
+        if (!res.ok) return apiError(res).then((error) => { throw error; });
         return res.json();
       })
       .then((data) => setAgents(data.agents ?? []))
@@ -52,7 +62,7 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: nextMessages }),
       });
-      if (!response.ok) throw new Error(`API returned ${response.status}`);
+      if (!response.ok) throw await apiError(response);
       const data = await response.json();
       const reply = data.output || "The agent returned an empty response.";
       setMessages([...nextMessages, { role: "assistant", content: reply }]);
