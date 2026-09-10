@@ -52,6 +52,30 @@ def test_agents_run_requires_openrouter_key() -> None:
     )
 
 
+def test_agents_stream_endpoint_returns_tokens() -> None:
+    """Agent streaming should expose chat content as structured SSE events."""
+    async def events(*args, **kwargs):
+        yield {"event": "on_chat_model_stream", "data": {"chunk": AsyncMock(content="Hello")}}
+        yield {"event": "on_chain_end", "data": {}}
+        yield {"event": "on_chat_model_stream", "data": {"chunk": AsyncMock(content=" world")}}
+
+    with (
+        patch("routes.agents.build_graph") as mock_build,
+        patch("routes.agents.settings.OPENROUTER_API_KEY", "test-key"),
+    ):
+        mock_build.return_value.astream_events = events
+
+        with TestClient(app) as client:
+            response = client.post("/agents/stream", json={"messages": [{"content": "Hi"}]})
+
+    assert response.status_code == 200
+    assert response.text == (
+        'data: {"token": "Hello"}\n\n'
+        'data: {"token": " world"}\n\n'
+        'data: {"done": true}\n\n'
+    )
+
+
 def test_health_check() -> None:
     """OpenAPI schema should be available."""
     with TestClient(app) as client:

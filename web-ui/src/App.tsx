@@ -57,15 +57,45 @@ export default function App() {
     setIsSending(true);
 
     try {
-      const response = await fetch(`${API_BASE}/agents/run`, {
+      const response = await fetch(`${API_BASE}/agents/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: nextMessages }),
       });
       if (!response.ok) throw await apiError(response);
-      const data = await response.json();
-      const reply = data.output || "The agent returned an empty response.";
-      setMessages([...nextMessages, { role: "assistant", content: reply }]);
+      if (!response.body) throw new Error("The agent returned no stream.");
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let reply = "";
+
+      const appendToken = (token: string) => {
+        reply += token;
+        setMessages([...nextMessages, { role: "assistant", content: reply }]);
+      };
+
+      while (true) {
+        const { done, value } = await reader.read();
+        buffer += decoder.decode(value, { stream: !done });
+        const events = buffer.split("\n\n");
+        buffer = events.pop() ?? "";
+
+        for (const event of events) {
+          const dataLine = event.split("\n").find((line) => line.startsWith("data: "));
+          if (!dataLine) continue;
+
+          const data = JSON.parse(dataLine.slice(6)) as { token?: string; error?: string };
+          if (data.error) throw new Error(data.error);
+          if (data.token) appendToken(data.token);
+        }
+
+        if (done) break;
+      }
+
+      if (!reply) {
+        setMessages([...nextMessages, { role: "assistant", content: "The agent returned an empty response." }]);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to reach the agent");
     } finally {

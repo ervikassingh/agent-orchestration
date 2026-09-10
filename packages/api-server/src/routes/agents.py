@@ -1,6 +1,7 @@
 """Agent-related API routes."""
 
 import inspect
+import json
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
@@ -106,8 +107,18 @@ async def stream_agent(input_data: RunAgentInput) -> StreamingResponse:
     state = State(messages=_messages_from_input(input_data))
 
     async def event_stream():
-        async for event in graph.astream_events(state, version="v1"):
-            yield f"data: {event}\n\n"
+        try:
+            async for event in graph.astream_events(state, version="v1"):
+                if event.get("event") != "on_chat_model_stream":
+                    continue
+
+                content = event.get("data", {}).get("chunk", {}).content
+                if isinstance(content, str) and content:
+                    yield f"data: {json.dumps({'token': content})}\n\n"
+
+            yield f"data: {json.dumps({'done': True})}\n\n"
+        except OpenAIError as exc:
+            yield f"data: {json.dumps({'error': str(exc)})}\n\n"
 
     return StreamingResponse(
         event_stream(),
