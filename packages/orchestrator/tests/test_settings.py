@@ -3,7 +3,7 @@
 import os
 from unittest.mock import patch
 
-from settings import Settings, settings
+from orchestrator.settings import Settings, settings
 
 
 def test_default_settings() -> None:

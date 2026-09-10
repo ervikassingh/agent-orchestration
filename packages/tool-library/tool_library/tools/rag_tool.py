@@ -3,7 +3,7 @@
 from typing import Any
 
 import httpx
-from base import BaseTool, ToolConfig, ToolResult
+from ..base import BaseTool, ToolConfig, ToolResult
 
 
 class RAGTool(BaseTool):

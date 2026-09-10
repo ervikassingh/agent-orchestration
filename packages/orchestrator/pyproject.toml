@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "LangGraph-based tool-calling orchestrator"
 authors = ["ervikassingh"]
 license = "MIT"
-packages = [{ include = "*.py", from = "src" }]
+packages = [{ include = "orchestrator" }]
 
 [tool.poetry.dependencies]
 python = "^3.11"

@@ -1,9 +1,5 @@
 .PHONY: install lint test build clean run-web run-api
 
-# ──────────────────────────────────────────────
-# Agent Orchestration — Makefile
-# ──────────────────────────────────────────────
-
 install:
 	poetry install
 	cd web-ui && npm install

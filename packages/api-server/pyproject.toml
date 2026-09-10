@@ -4,10 +4,7 @@ version = "0.1.0"
 description = "FastAPI server exposing agent orchestration endpoints"
 authors = ["ervikassingh"]
 license = "MIT"
-packages = [
-    { include = "*.py", from = "src" },
-    { include = "routes", from = "src" },
-]
+packages = [{ include = "api_server" }]
 
 [tool.poetry.dependencies]
 python = "^3.11"

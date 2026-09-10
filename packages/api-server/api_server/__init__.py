@@ -9,7 +9,7 @@ Endpoints:
 - POST /rag/ingest           — Ingest a document
 """
 
-from main import app
+from .main import app
 
 __all__ = ["app"]
 

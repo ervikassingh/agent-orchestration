@@ -4,7 +4,7 @@ import smtplib
 import ssl
 from typing import Any
 
-from base import BaseTool, ToolConfig, ToolResult
+from ..base import BaseTool, ToolConfig, ToolResult
 
 
 class EmailTool(BaseTool):
@@ -28,7 +28,7 @@ class EmailTool(BaseTool):
                 error=f"Missing required parameter(s): {', '.join(missing)}",
             )
 
-        from settings import settings
+        from orchestrator.settings import settings
 
         if not settings.SMTP_HOST or settings.SMTP_HOST == "localhost":
             return ToolResult(

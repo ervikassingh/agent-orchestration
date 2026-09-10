@@ -5,9 +5,9 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pipeline import RAGConfig, RAGPipeline
-from registry import ToolRegistry
-from routes import agents, rag
+from rag_pipeline import RAGConfig, RAGPipeline
+from tool_library import ToolRegistry
+from .routes import agents, rag
 
 
 @asynccontextmanager

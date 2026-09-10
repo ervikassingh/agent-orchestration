@@ -1,6 +1,6 @@
 """Basic tests for the RAG pipeline config."""
 
-from pipeline import RAGConfig
+from rag_pipeline.pipeline import RAGConfig
 
 
 def test_default_config() -> None:

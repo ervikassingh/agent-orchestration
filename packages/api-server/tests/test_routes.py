@@ -3,7 +3,7 @@
 from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
-from main import app
+from api_server.main import app
 
 
 def test_agents_list_endpoint() -> None:
@@ -23,8 +23,8 @@ def test_agents_list_endpoint() -> None:
 def test_agents_run_endpoint() -> None:
     """Agents run endpoint should accept input and return output."""
     with (
-        patch("routes.agents.build_graph") as mock_build,
-        patch("routes.agents.settings.OPENROUTER_API_KEY", "test-key"),
+            patch("api_server.routes.agents.build_graph") as mock_build,
+            patch("api_server.routes.agents.settings.OPENROUTER_API_KEY", "test-key"),
     ):
         mock_graph = AsyncMock()
         mock_graph.ainvoke.return_value = {
@@ -42,7 +42,7 @@ def test_agents_run_endpoint() -> None:
 
 def test_agents_run_requires_openrouter_key() -> None:
     """Agent requests should explain missing LLM configuration."""
-    with patch("routes.agents.settings.OPENROUTER_API_KEY", ""):
+    with patch("api_server.routes.agents.settings.OPENROUTER_API_KEY", ""):
         with TestClient(app) as client:
             response = client.post("/agents/run", json={"messages": [{"content": "Hi"}]})
 
@@ -59,8 +59,8 @@ def test_agents_stream_endpoint_returns_tokens() -> None:
         yield AsyncMock(content=" world"), {}
 
     with (
-        patch("routes.agents.build_graph") as mock_build,
-        patch("routes.agents.settings.OPENROUTER_API_KEY", "test-key"),
+        patch("api_server.routes.agents.build_graph") as mock_build,
+        patch("api_server.routes.agents.settings.OPENROUTER_API_KEY", "test-key"),
     ):
         mock_build.return_value.astream = messages
 
@@ -89,14 +89,14 @@ def test_rag_query_endpoint() -> None:
 
     # Mock both the embeddings (used by VectorRetriever) and the LLM
     with (
-        patch("retriever.OpenAIEmbeddings") as mock_embeddings,
-        patch("pipeline.ChatOpenAI") as mock_llm,
+        patch("rag_pipeline.retriever.OpenAIEmbeddings") as mock_embeddings,
+        patch("rag_pipeline.pipeline.ChatOpenAI") as mock_llm,
     ):
         mock_embeddings.return_value = AsyncMock()
         mock_llm.return_value.ainvoke = AsyncMock(return_value=mock_response)
 
         # Mock the similarity search to return empty chunks (no retrieval needed)
-        with patch("retriever.VectorRetriever.similarity_search") as mock_search:
+        with patch("rag_pipeline.retriever.VectorRetriever.similarity_search") as mock_search:
             mock_search.return_value = []
 
             with TestClient(app) as client:

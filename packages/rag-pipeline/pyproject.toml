@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Retrieval-Augmented Generation pipeline with document loading, chunking, embedding, and retrieval"
 authors = ["ervikassingh"]
 license = "MIT"
-packages = [{ include = "*.py", from = "src" }]
+packages = [{ include = "rag_pipeline" }]
 
 [tool.poetry.dependencies]
 python = "^3.11"

@@ -10,8 +10,8 @@ from langgraph.graph.message import add_messages
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import ToolNode
 from pydantic import BaseModel, Field
-from settings import settings
-from tool_adapter import build_langchain_tools
+from .settings import settings
+from .tool_adapter import build_langchain_tools
 
 logger = logging.getLogger(__name__)
 
