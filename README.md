@@ -127,24 +127,24 @@ agent-orchestration/
 ├── pyproject.toml            # Poetry workspace root
 ├── packages/
 │   ├── orchestrator/
-│   │   ├── src/
+│   │   ├── orchestrator/
 │   │   │   ├── graph.py      # LangGraph orchestration (tool-calling loop)
 │   │   │   ├── settings.py   # Settings (env-based config)
 │   │   │   └── tool_adapter.py  # BaseTool → LangChain StructuredTool
 │   │   └── tests/
 │   ├── rag-pipeline/
-│   │   ├── src/
+│   │   ├── rag_pipeline/
 │   │   │   ├── pipeline.py   # RAGPipeline (ingest, retrieve, query)
 │   │   │   └── retriever.py  # VectorRetriever (Chroma + OpenAI embeddings)
 │   │   └── tests/
 │   ├── tool-library/
-│   │   ├── src/
+│   │   ├── tool_library/
 │   │   │   ├── base.py       # BaseTool, ToolConfig, ToolResult
 │   │   │   ├── registry.py   # ToolRegistry
 │   │   │   └── tools/        # web_tool, email_tool, rag_tool
 │   │   └── tests/
 │   └── api-server/
-│       ├── src/
+│       ├── api_server/
 │       │   ├── main.py       # FastAPI app + lifespan
 │       │   └── routes/       # agents.py, rag.py
 │       └── tests/

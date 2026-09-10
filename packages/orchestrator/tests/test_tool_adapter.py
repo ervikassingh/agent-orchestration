@@ -1,19 +1,18 @@
 """Tests for the tool adapter that bridges BaseTool to LangChain StructuredTool."""
 
 import pytest
+from tool_library.base import BaseTool, ToolConfig, ToolResult
 from langchain_core.tools import StructuredTool
-from base import BaseTool, ToolConfig, ToolResult
-from tools.email_tool import EmailTool
-from tools.rag_tool import RAGTool
-from tools.web_tool import WebSurfTool
-
-from tool_adapter import (
+from orchestrator.tool_adapter import (
     EmailSchema,
     RAGSchema,
     WebSurfSchema,
     build_langchain_tools,
     tool_to_langchain,
 )
+from tool_library.tools.email_tool import EmailTool
+from tool_library.tools.rag_tool import RAGTool
+from tool_library.tools.web_tool import WebSurfTool
 
 
 class DummyTool(BaseTool):

@@ -1,6 +1,6 @@
 """Tool registry — discover and instantiate tools by name."""
 
-from base import BaseTool
+from .base import BaseTool
 
 
 class ToolRegistry:

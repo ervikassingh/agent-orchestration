@@ -1,21 +1,25 @@
 """LangGraph-based tool-calling orchestrator."""
 
-from typing import Any, Literal
+import logging
+from typing import Annotated, Any, Literal
 
 from langchain_core.messages import BaseMessage, SystemMessage
 from langchain_openai import ChatOpenAI
-from langgraph.graph import END, StateGraph
+from langgraph.graph import StateGraph
+from langgraph.graph.message import add_messages
+from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import ToolNode
 from pydantic import BaseModel, Field
+from .settings import settings
+from .tool_adapter import build_langchain_tools
 
-from settings import settings
-from tool_adapter import build_langchain_tools
+logger = logging.getLogger(__name__)
 
 
 class State(BaseModel):
     """State for the tool-calling orchestration loop."""
 
-    messages: list[BaseMessage] = Field(default_factory=list)
+    messages: Annotated[list[BaseMessage], add_messages] = Field(default_factory=list)
     tool_outputs: dict[str, Any] = Field(default_factory=dict)
     iterations: int = 0
     max_iterations: int = Field(default_factory=lambda: settings.MAX_TOOL_ITERATIONS)
@@ -27,7 +31,7 @@ def _get_llm() -> ChatOpenAI:
     return ChatOpenAI(
         model=settings.MODEL,
         temperature=settings.TEMPERATURE,
-        max_tokens=settings.MAX_TOKENS,
+        max_completion_tokens=settings.MAX_TOKENS,
         api_key=settings.OPENROUTER_API_KEY,
         base_url=settings.OPENROUTER_BASE_URL,
     )
@@ -60,6 +64,11 @@ async def orchestrator_node(state: State) -> dict[str, Any]:
 
     llm = _get_llm()
     llm_with_tools = llm.bind_tools(_tools)
+    logger.info(
+        "Orchestrator: iteration=%d, message_count=%d",
+        state.iterations + 1,
+        len(messages),
+    )
     response = await llm_with_tools.ainvoke(messages)
 
     return {
@@ -70,6 +79,8 @@ async def orchestrator_node(state: State) -> dict[str, Any]:
 
 async def tools_node(state: State) -> dict[str, Any]:
     """Execute tool calls and collect results."""
+    last_message = state.messages[-1] if state.messages else None
+    tool_calls = getattr(last_message, "tool_calls", [])
     tool_node = ToolNode(_tools)
     result = await tool_node.ainvoke(state)
 
@@ -78,9 +89,25 @@ async def tools_node(state: State) -> dict[str, Any]:
     tool_outputs: dict[str, Any] = {}
     for msg in result.get("messages", []):
         if hasattr(msg, "name") and msg.name:
+            output = msg.content
+            output_metadata = {
+                "content_length": len(output) if isinstance(output, str) else None,
+            }
+            if isinstance(output, dict):
+                output_metadata.update(
+                    {
+                        "source": output.get("source"),
+                        "length": output.get("length"),
+                    }
+                )
+            logger.info(
+                "Tool: tool_name=%s, response_length=%d",
+                msg.name,
+                len(output) if isinstance(output, str) else 0,
+            )
             tool_outputs[msg.tool_call_id] = {
                 "name": msg.name,
-                "content": msg.content,
+                "content": output,
             }
 
     return {
@@ -97,13 +124,13 @@ async def tools_node(state: State) -> dict[str, Any]:
 def should_continue(state: State) -> Literal["tools", "__end__"]:
     """Decide whether to continue the tool loop or finish."""
     if state.iterations >= state.max_iterations:
-        return END
+        return "__end__"
 
     last_message = state.messages[-1] if state.messages else None
     if last_message and hasattr(last_message, "tool_calls") and last_message.tool_calls:
         return "tools"
 
-    return END
+    return "__end__"
 
 
 # ---------------------------------------------------------------------------
@@ -111,7 +138,7 @@ def should_continue(state: State) -> Literal["tools", "__end__"]:
 # ---------------------------------------------------------------------------
 
 
-def build_graph() -> StateGraph:
+def build_graph() -> CompiledStateGraph[State, None, State, State]:
     """Build and compile the tool-calling orchestration graph."""
     workflow = StateGraph(State)
 

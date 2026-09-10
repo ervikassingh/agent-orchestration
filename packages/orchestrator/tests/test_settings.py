@@ -3,12 +3,13 @@
 import os
 from unittest.mock import patch
 
-from settings import Settings, settings
+from orchestrator.settings import Settings, settings
 
 
 def test_default_settings() -> None:
     """Default settings should have sensible defaults."""
-    s = Settings()
+    with patch.dict(os.environ, {"MAX_TOOL_ITERATIONS": "10"}):
+        s = Settings()
     assert s.OPENROUTER_BASE_URL == "https://openrouter.ai/api/v1"
     assert s.MODEL == "openai/gpt-4o-mini"
     assert s.TEMPERATURE == 0.7

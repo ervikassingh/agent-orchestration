@@ -1,9 +1,5 @@
 .PHONY: install lint test build clean run-web run-api
 
-# ──────────────────────────────────────────────
-# Agent Orchestration — Makefile
-# ──────────────────────────────────────────────
-
 install:
 	poetry install
 	cd web-ui && npm install
@@ -20,7 +16,7 @@ build:
 	cd web-ui && npm run build
 
 run-api:
-	PYTHONPATH=packages/api-server/src:packages/orchestrator/src:packages/rag-pipeline/src:packages/tool-library/src poetry run uvicorn main:app --reload --port 8000
+	poetry run uvicorn api_server.main:app --reload --port 8000
 
 run-web:
 	cd web-ui && npm run dev

@@ -2,12 +2,12 @@
 
 from typing import Any
 
+from tool_library.base import BaseTool
 from langchain_core.tools import StructuredTool
 from pydantic import BaseModel, Field
-from base import BaseTool
-from tools.email_tool import EmailTool
-from tools.rag_tool import RAGTool
-from tools.web_tool import WebSurfTool
+from tool_library.tools.email_tool import EmailTool
+from tool_library.tools.rag_tool import RAGTool
+from tool_library.tools.web_tool import WebSurfTool
 
 
 class RAGSchema(BaseModel):

@@ -1,8 +1,8 @@
 """Tests for the tool registry."""
 
 import pytest
-from base import BaseTool, ToolConfig, ToolResult
-from registry import ToolRegistry
+from tool_library.base import BaseTool, ToolConfig, ToolResult
+from tool_library.registry import ToolRegistry
 
 
 class DummyTool(BaseTool):
