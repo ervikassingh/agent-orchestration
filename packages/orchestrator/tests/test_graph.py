@@ -1,7 +1,10 @@
 """Tests for the LangGraph orchestrator graph."""
 
+import logging
+
 import pytest
-from orchestrator.graph import State, build_graph, should_continue
+from orchestrator import graph as graph_module
+from orchestrator.graph import State, build_graph, orchestrator_node, should_continue, tools_node
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langgraph.graph.message import add_messages
 

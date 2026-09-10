@@ -65,17 +65,11 @@ async def orchestrator_node(state: State) -> dict[str, Any]:
     llm = _get_llm()
     llm_with_tools = llm.bind_tools(_tools)
     logger.info(
-        "agent_step=llm_call iteration=%d message_count=%d tools_available=%s",
+        "Orchestrator: iteration=%d, message_count=%d",
         state.iterations + 1,
         len(messages),
-        [tool.name for tool in _tools],
     )
     response = await llm_with_tools.ainvoke(messages)
-    logger.info(
-        "agent_step=llm_response iteration=%d tool_calls=%s",
-        state.iterations + 1,
-        [call.get("name") for call in getattr(response, "tool_calls", [])],
-    )
 
     return {
         "messages": [response],
@@ -87,14 +81,6 @@ async def tools_node(state: State) -> dict[str, Any]:
     """Execute tool calls and collect results."""
     last_message = state.messages[-1] if state.messages else None
     tool_calls = getattr(last_message, "tool_calls", [])
-    logger.info(
-        "agent_step=tool_execution iteration=%d tool_calls=%s",
-        state.iterations,
-        [
-            {"name": call.get("name"), "id": call.get("id")}
-            for call in tool_calls
-        ],
-    )
     tool_node = ToolNode(_tools)
     result = await tool_node.ainvoke(state)
 
@@ -115,10 +101,9 @@ async def tools_node(state: State) -> dict[str, Any]:
                     }
                 )
             logger.info(
-                "tool_used name=%s iteration=%d success=true metadata=%s",
+                "Tool: tool_name=%s, response_length=%d",
                 msg.name,
-                state.iterations,
-                output_metadata,
+                len(output) if isinstance(output, str) else 0,
             )
             tool_outputs[msg.tool_call_id] = {
                 "name": msg.name,

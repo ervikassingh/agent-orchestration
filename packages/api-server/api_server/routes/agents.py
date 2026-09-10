@@ -54,7 +54,7 @@ def _messages_from_input(input_data: RunAgentInput) -> list[BaseMessage]:
 @router.post("/run")
 async def run_agent(input_data: RunAgentInput) -> dict[str, Any]:
     """Run the orchestrator with the given input."""
-    logger.info("agent_request_started endpoint=run input_messages=%d", len(input_data.messages))
+    logger.info("API /run: message_length=%d", len(input_data.messages))
     if not settings.OPENROUTER_API_KEY:
         raise HTTPException(
             status_code=503,
@@ -66,7 +66,7 @@ async def run_agent(input_data: RunAgentInput) -> dict[str, Any]:
     try:
         result = await graph.ainvoke(state)
     except OpenAIError as exc:
-        logger.exception("agent_request_failed endpoint=run provider_error=%s", exc)
+        logger.exception("API /run: failed provider_error=%s", exc)
         raise HTTPException(
             status_code=502,
             detail=f"The configured LLM provider rejected the request: {exc}",
@@ -78,7 +78,7 @@ async def run_agent(input_data: RunAgentInput) -> dict[str, Any]:
         result.get("tool_outputs", {}) if isinstance(result, dict) else result.tool_outputs
     )
     logger.info(
-        "agent_request_completed endpoint=run iterations=%s tools_used=%s",
+        "API /run: completed iterations=%s tools_used=%s",
         result.get("iterations") if isinstance(result, dict) else result.iterations,
         [output.get("name") for output in tool_outputs.values()],
     )
@@ -96,7 +96,7 @@ async def run_agent(input_data: RunAgentInput) -> dict[str, Any]:
 @router.post("/stream")
 async def stream_agent(input_data: RunAgentInput) -> StreamingResponse:
     """Stream orchestrator output via SSE."""
-    logger.info("agent_request_started endpoint=stream input_messages=%d", len(input_data.messages))
+    logger.info("API /stream: message_length=%d", len(input_data.messages))
     if not settings.OPENROUTER_API_KEY:
         raise HTTPException(
             status_code=503,
@@ -116,9 +116,9 @@ async def stream_agent(input_data: RunAgentInput) -> StreamingResponse:
                     yield f"data: {json.dumps({'token': content})}\n\n"
 
             yield f"data: {json.dumps({'done': True})}\n\n"
-            logger.info("agent_request_completed endpoint=stream")
+            logger.info("API /stream: completed")
         except OpenAIError as exc:
-            logger.exception("agent_request_failed endpoint=stream provider_error=%s", exc)
+            logger.exception("API /stream: failed provider_error=%s", exc)
             yield f"data: {json.dumps({'error': str(exc)})}\n\n"
 
     return StreamingResponse(
