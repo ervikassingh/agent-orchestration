@@ -3,6 +3,7 @@
 from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
+from langchain_core.messages import AIMessageChunk
 from api_server.main import app
 
 
@@ -36,8 +37,7 @@ def test_agents_run_endpoint() -> None:
             response = client.post("/agents/run", json={"messages": [{"content": "Hi"}]})
             assert response.status_code == 200
             data = response.json()
-            assert "output" in data
-            assert "messages" in data
+            assert data == {"output": ""}
 
 
 def test_agents_run_requires_openrouter_key() -> None:
@@ -55,8 +55,8 @@ def test_agents_run_requires_openrouter_key() -> None:
 def test_agents_stream_endpoint_returns_tokens() -> None:
     """Agent streaming should expose message chunks as structured SSE events."""
     async def messages(*args, **kwargs):
-        yield AsyncMock(content="Hello"), {}
-        yield AsyncMock(content=" world"), {}
+        yield AIMessageChunk(content="Hello"), {}
+        yield AIMessageChunk(content=" world"), {}
 
     with (
         patch("api_server.routes.agents.build_graph") as mock_build,
