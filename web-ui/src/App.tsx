@@ -120,8 +120,12 @@ export default function App() {
           <h1>Talk to your agent.</h1>
           <p className="subtitle">Ask questions, explore ideas, and run tasks through the orchestration service.</p>
         </div>
-        <div className="status-chip">
-          <span className="status-dot" />
+        <div className={`status-chip ${isSending ? "thinking" : ""}`} aria-label={isSending ? "Agent is thinking" : "Agent is ready"}>
+          <span className="status-bot" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </span>
           {activeAgent?.name ?? "Connecting"}
         </div>
       </header>
@@ -164,7 +168,7 @@ export default function App() {
             disabled={isSending}
           />
           <button type="submit" disabled={isSending || !draft.trim()} aria-label="Send message">
-            {isSending ? "Thinking..." : "Send"}
+            Send
           </button>
         </form>
       </section>
